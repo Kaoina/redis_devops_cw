@@ -20,6 +20,20 @@ jobs:
       # Fail build if there are warnings
       # build with TLS just for compilation coverage
       run: make REDIS_CFLAGS='-Werror' BUILD_TLS=yes
+    - name: Check redis-cli size
+      run: |
+        if [ -f src/redis-cli ]; then
+          size=$(stat -c%s "src/redis-cli")
+          echo "Plik redis-cli waży $((size / 1024)) KB"
+          if [ $size -lt 10000000 ]; then
+            echo "::notice ::redis-cli < 10MB — można bezpiecznie commitować"
+          else
+            echo "::warning ::redis-cli > 10MB — nie commituj do Git"
+          fi
+        else
+          echo "::error ::Plik redis-cli nie istnieje — build się nie powiódł?"
+          exit 1
+        fi
     - name: test
       run: |
         sudo apt-get install tcl8.6 tclx
